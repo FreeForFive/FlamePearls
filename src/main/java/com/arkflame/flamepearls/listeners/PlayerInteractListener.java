@@ -7,6 +7,7 @@ import com.arkflame.flamepearls.utils.MessageUtil;
 import com.arkflame.flamepearls.utils.WorldUtil;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
+import org.bukkit.event.Event;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
@@ -41,16 +42,21 @@ public class PlayerInteractListener implements Listener {
             return;
         }
 
-        final PlayerInventory inventory = player.getInventory();
-        final ItemStack heldItem = inventory.getItem(inventory.getHeldItemSlot());
+        final ItemStack heldItem = event.getItem();
         if (heldItem == null || heldItem.getType() != Material.ENDER_PEARL) {
             return;
         }
 
-        if (action == Action.RIGHT_CLICK_BLOCK && generalConfigHolder.isPreventPearlOnClickBlock()) {
-            event.setCancelled(true);
-            inventory.setItem(inventory.getHeldItemSlot(), heldItem);
-            return;
+        final PlayerInventory inventory = player.getInventory();
+        if (action == Action.RIGHT_CLICK_BLOCK) {
+            if (generalConfigHolder.isPreventPearlOnClickBlock()) {
+                event.setCancelled(true);
+                event.setUseItemInHand(Event.Result.DENY);
+                inventory.setItem(inventory.getHeldItemSlot(), heldItem);
+                return;
+            }
+
+            allowPearlUseOnClickedBlock(event);
         }
 
         if (!generalConfigHolder.isPearlCooldownEnabled()) {
@@ -62,6 +68,7 @@ public class PlayerInteractListener implements Listener {
             final DecimalFormat decimalFormat = new DecimalFormat("0.0");
             final String cooldownSeconds = decimalFormat.format(cooldown);
             event.setCancelled(true);
+            event.setUseItemInHand(Event.Result.DENY);
             inventory.setItem(inventory.getHeldItemSlot(), heldItem);
             MessageUtil.sendMessage(player, messagesConfigHolder.getMessage("cooldown")
                     .replace("{time}", cooldownSeconds));
@@ -69,5 +76,12 @@ public class PlayerInteractListener implements Listener {
         }
 
         cooldownManager.updateLastPearl(player);
+    }
+
+    private void allowPearlUseOnClickedBlock(final PlayerInteractEvent event) {
+        if (event.useItemInHand() != Event.Result.DENY) {
+            event.setUseItemInHand(Event.Result.ALLOW);
+        }
+        event.setUseInteractedBlock(Event.Result.DENY);
     }
 }
