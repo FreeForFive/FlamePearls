@@ -4,11 +4,16 @@
 
 # --- Gameplay Mechanics ---
 
-# Disable the random chance for endermites to spawn from ender pearls.
-disable-endermites: true
+# Controls all endermite behavior caused by ender pearls.
+# enabled: false disables endermites by default.
+# chance: chance from 0.0 to 1.0 for FlamePearls to spawn one endermite when enabled.
+endermites:
+  enabled: false
+  chance: 0.05
 
-# If endermites are not disabled, this is the chance (0.0 to 1.0) for one to spawn.
-endermite-chance: 0.05
+# If true, right-clicking a block with an ender pearl is cancelled.
+# Default false keeps block-click pearl behavior allowed.
+prevent-pearl-on-click-block: false
 
 # Prevents players from taking fall damage that was accumulated before they teleported.
 reset-fall-damage-after-teleport: true

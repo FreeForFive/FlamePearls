@@ -31,7 +31,6 @@ public class ProjectileHitListener implements Listener {
     private final TeleportDataManager teleportDataManager;
     private final GeneralConfigHolder generalConfigHolder;
     private final MessagesConfigHolder messagesConfigHolder;
-    private final double endermiteChance;
 
     public ProjectileHitListener(final TeleportDataManager teleportDataManager,
                                  final OriginManager originManager,
@@ -41,7 +40,6 @@ public class ProjectileHitListener implements Listener {
         this.teleportDataManager = teleportDataManager;
         this.generalConfigHolder = generalConfigHolder;
         this.messagesConfigHolder = messagesConfigHolder;
-        this.endermiteChance = generalConfigHolder.getEndermiteChance();
     }
 
     @EventHandler(ignoreCancelled = true)
@@ -141,17 +139,14 @@ public class ProjectileHitListener implements Listener {
             player.damage(damage, projectile);
         }
 
-        if (endermiteChance > Math.random()) {
-            final Location spawnLoc = projectile.getLocation();
-            if (!FoliaAPI.isFolia()) {
-                FoliaAPI.runTaskForEntity(projectile, () -> {
-                    final World spawnWorld = spawnLoc.getWorld();
-                    if (spawnWorld != null) {
-                        spawnWorld.spawnEntity(spawnLoc, EntityType.ENDERMITE);
-                    }
-                }, () -> {
-                }, 1L);
-            }
+        if (generalConfigHolder.isEndermitesEnabled() && generalConfigHolder.getEndermiteChance() > Math.random()) {
+            final Location spawnLoc = projectile.getLocation().clone();
+            FoliaAPI.runTaskForRegion(spawnLoc, () -> {
+                final World spawnWorld = spawnLoc.getWorld();
+                if (spawnWorld != null) {
+                    spawnWorld.spawnEntity(spawnLoc, EntityType.ENDERMITE);
+                }
+            });
         }
 
         Sounds.play(player.getLocation(), 1.0F, 1.0F, generalConfigHolder.getPearlSounds());

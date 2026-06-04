@@ -16,8 +16,11 @@ import java.util.stream.Collectors;
 
 @Getter
 public class GeneralConfigHolder {
-    private static final String DISABLE_ENDERMITES_PATH = "disable-endermites";
-    private static final String ENDERMITE_CHANCE_PATH = "endermite-chance";
+    private static final String ENDERMITES_ENABLED_PATH = "endermites.enabled";
+    private static final String ENDERMITES_CHANCE_PATH = "endermites.chance";
+    private static final String LEGACY_DISABLE_ENDERMITES_PATH = "disable-endermites";
+    private static final String LEGACY_ENDERMITE_CHANCE_PATH = "endermite-chance";
+    private static final String PREVENT_PEARL_ON_CLICK_BLOCK_PATH = "prevent-pearl-on-click-block";
     private static final String RESET_FALL_DAMAGE_PATH = "reset-fall-damage-after-teleport";
     private static final String NO_DAMAGE_TICKS_PATH = "teleport-no-damage-ticks";
     private static final String PEARL_DAMAGE_SELF_PATH = "pearl-damage-self";
@@ -35,7 +38,7 @@ public class GeneralConfigHolder {
     private static final String PREVENT_WORLD_SWITCH_TELEPORT_PATH = "prevent-world-switch-teleport";
     private static final String MAX_TELEPORT_DISTANCE_PATH = "max-teleport-distance";
 
-    private boolean disableEndermites;
+    private boolean endermitesEnabled;
     private double endermiteChance;
     private boolean resetFallDamageAfterTeleport;
     private int noDamageTicksAfterTeleport;
@@ -48,6 +51,7 @@ public class GeneralConfigHolder {
     private boolean preventWorldSwitchTeleport;
     private boolean resetVelocityAfterTeleport;
     private boolean pearlCooldownEnabled;
+    private boolean preventPearlOnClickBlock;
 
     private List<Integer> permissionCooldownTiers = Collections.emptyList();
     private List<Sound> pearlSounds = Collections.emptyList();
@@ -60,8 +64,9 @@ public class GeneralConfigHolder {
 
     public void load(@NotNull Configuration config) {
         // Load existing config values.
-        disableEndermites = config.getBoolean(DISABLE_ENDERMITES_PATH, true);
-        endermiteChance = config.getDouble(ENDERMITE_CHANCE_PATH, 0.0);
+        endermitesEnabled = readEndermitesEnabled(config);
+        endermiteChance = readEndermiteChance(config);
+        preventPearlOnClickBlock = config.getBoolean(PREVENT_PEARL_ON_CLICK_BLOCK_PATH, false);
         resetFallDamageAfterTeleport = config.getBoolean(RESET_FALL_DAMAGE_PATH, true);
         noDamageTicksAfterTeleport = config.getInt(NO_DAMAGE_TICKS_PATH, 0);
         pearlDamageSelf = config.getDouble(PEARL_DAMAGE_SELF_PATH, 5.0);
@@ -114,6 +119,26 @@ public class GeneralConfigHolder {
                 .filter(Optional::isPresent)
                 .map(Optional::get)
                 .collect(Collectors.toList());
+    }
+
+    private boolean readEndermitesEnabled(@NotNull Configuration config) {
+        if (config.contains(ENDERMITES_ENABLED_PATH)) {
+            return config.getBoolean(ENDERMITES_ENABLED_PATH, false);
+        }
+        return !config.getBoolean(LEGACY_DISABLE_ENDERMITES_PATH, true);
+    }
+
+    private double readEndermiteChance(@NotNull Configuration config) {
+        final double configuredChance;
+        if (config.contains(ENDERMITES_CHANCE_PATH)) {
+            configuredChance = config.getDouble(ENDERMITES_CHANCE_PATH, 0.05D);
+        } else {
+            configuredChance = config.getDouble(LEGACY_ENDERMITE_CHANCE_PATH, 0.05D);
+        }
+        if (Double.isNaN(configuredChance) || Double.isInfinite(configuredChance)) {
+            return 0.05D;
+        }
+        return Math.max(0.0D, Math.min(1.0D, configuredChance));
     }
 
     private double readCooldownSeconds(@NotNull Configuration config) {
